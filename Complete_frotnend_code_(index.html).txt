@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Corporate Fire Prediction System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        .card h2 {
+            color: #4a5568;
+            margin-bottom: 20px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #4a5568;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .result-card {
+            grid-column: 1 / -1;
+            margin-top: 20px;
+        }
+
+        .result-content {
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+
+        .result-safe {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+            color: white;
+        }
+
+        .result-warning {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+            color: white;
+        }
+
+        .result-danger {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+            100% { transform: scale(1); }
+        }
+
+        .result-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .result-item {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+
+        .result-item h4 {
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+            opacity: 0.8;
+        }
+
+        .result-item p {
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            background: #f7fafc;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #48bb78;
+            animation: blink 2s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0.3; }
+        }
+
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .quick-btn {
+            background: rgba(255, 255, 255, 0.1);
+            color: #4a5568;
+            border: 2px solid #e2e8f0;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            font-weight: 600;
+        }
+
+        .quick-btn:hover {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .container {
+                padding: 15px;
+            }
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #c53030;
+            border-left: 4px solid #f56565;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #2f855a;
+            border-left: 4px solid #48bb78;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔥 Corporate Fire Prediction System</h1>
+            <p>Advanced AI-powered fire detection and risk assessment for office environments</p>
+        </div>
+
+        <div class="main-content">
+            <div class="card">
+                <h2>📊 Sensor Data Input</h2>
+                
+                <div class="status-indicator">
+                    <div class="status-dot" id="statusDot"></div>
+                    <span id="connectionStatus">Connecting to prediction service...</span>
+                </div>
+
+                <form id="predictionForm">
+                    <div class="form-group">
+                        <label for="temperature">🌡️ Temperature (°C)</label>
+                        <input type="number" id="temperature" step="0.1" min="15" max="60" value="22.0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="smoke">💨 Smoke Level (ppm)</label>
+                        <input type="number" id="smoke" step="0.1" min="0" max="1000" value="15.0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="co2">🌬️ CO2 Level (ppm)</label>
+                        <input type="number" id="co2" step="0.1" min="300" max="5000" value="550.0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="humidity">💧 Humidity (%)</label>
+                        <input type="number" id="humidity" step="0.1" min="0" max="100" value="50.0" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="occupancy">👥 Occupancy Count</label>
+                        <input type="number" id="occupancy" min="0" max="200" value="40" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="hvac">❄️ HVAC Status</label>
+                        <select id="hvac" required>
+                            <option value="On">On</option>
+                            <option value="Off">Off</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="btn" id="predictBtn">
+                        Analyze Fire Risk
+                    </button>
+                </form>
+
+                <div class="quick-actions">
+                    <button class="quick-btn" onclick="loadScenario('normal')">Normal Office</button>
+                    <button class="quick-btn" onclick="loadScenario('high_risk')">High Risk</button>
+                    <button class="quick-btn" onclick="loadScenario('emergency')">Emergency</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>📈 Risk Assessment</h2>
+                <div id="riskVisualization">
+                    <div style="text-align: center; padding: 40px; color: #a0aec0;">
+                        <p>Enter sensor data and click "Analyze Fire Risk" to see the assessment</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card result-card" id="resultCard" style="display: none;">
+            <h2>🎯 Prediction Results</h2>
+            <div id="resultContent"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:5000';
+        let isConnected = false;
+
+        // Check API connection on load
+        async function checkConnection() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/health`);
+                const data = await response.json();
+                
+                if (data.status === 'healthy') {
+                    isConnected = true;
+                    document.getElementById('connectionStatus').textContent = 'Connected to prediction service';
+                    document.getElementById('statusDot').style.background = '#48bb78';
+                } else {
+                    throw new Error('Service unhealthy');
+                }
+            } catch (error) {
+                isConnected = false;
+                document.getElementById('connectionStatus').textContent = 'Cannot connect to prediction service';
+                document.getElementById('statusDot').style.background = '#f56565';
+                showAlert('Cannot connect to backend API. Please ensure the Flask server is running on port 5000.', 'error');
+            }
+        }
+
+        // Load predefined scenarios
+        function loadScenario(type) {
+            const scenarios = {
+                normal: {
+                    temperature: 22.0,
+                    smoke: 15.0,
+                    co2: 550.0,
+                    humidity: 50.0,
+                    occupancy: 40,
+                    hvac: 'On'
+                },
+                high_risk: {
+                    temperature: 35.0,
+                    smoke: 150.0,
+                    co2: 1200.0,
+                    humidity: 30.0,
+                    occupancy: 20,
+                    hvac: 'Off'
+                },
+                emergency: {
+                    temperature: 45.5,
+                    smoke: 750.0,
+                    co2: 2800.0,
+                    humidity: 25.0,
+                    occupancy: 5,
+                    hvac: 'Off'
+                }
+            };
+
+            const scenario = scenarios[type];
+            if (scenario) {
+                document.getElementById('temperature').value = scenario.temperature;
+                document.getElementById('smoke').value = scenario.smoke;
+                document.getElementById('co2').value = scenario.co2;
+                document.getElementById('humidity').value = scenario.humidity;
+                document.getElementById('occupancy').value = scenario.occupancy;
+                document.getElementById('hvac').value = scenario.hvac;
+            }
+        }
+
+        // Show alert messages
+        function showAlert(message, type) {
+            const existingAlert = document.querySelector('.alert');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type}`;
+            alert.textContent = message;
+            
+            const form = document.getElementById('predictionForm');
+            form.parentNode.insertBefore(alert, form);
+
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 5000);
+        }
+
+        // Create risk visualization
+        function createRiskVisualization(probability) {
+            const percentage = Math.round(probability * 100);
+            const color = percentage >= 60 ? '#f56565' : percentage >= 40 ? '#ed8936' : '#48bb78';
+            
+            return `
+                <div style="text-align: center;">
+                    <div style="position: relative; width: 150px; height: 150px; margin: 0 auto 20px;">
+                        <svg width="150" height="150" style="transform: rotate(-90deg);">
+                            <circle cx="75" cy="75" r="65" stroke="#e2e8f0" stroke-width="10" fill="none"></circle>
+                            <circle cx="75" cy="75" r="65" stroke="${color}" stroke-width="10" fill="none" 
+                                    stroke-dasharray="408.4" stroke-dashoffset="${408.4 - (408.4 * probability)}"
+                                    style="transition: stroke-dashoffset 2s ease;"></circle>
+                        </svg>
+                        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 2rem; font-weight: bold; color: ${color};">
+                            ${percentage}%
+                        </div>
+                    </div>
+                    <h3 style="color: ${color}; margin-bottom: 10px;">Fire Risk Probability</h3>
+                    <p style="color: #666; font-size: 0.9rem;">Based on current sensor readings</p>
+                </div>
+            `;
+        }
+
+        // Handle form submission
+        document.getElementById('predictionForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (!isConnected) {
+                showAlert('Cannot make prediction - not connected to service', 'error');
+                return;
+            }
+
+            const button = document.getElementById('predictBtn');
+            const originalText = button.textContent;
+            button.innerHTML = '<span class="loading"></span> Analyzing...';
+            button.disabled = true;
+
+            try {
+                const formData = {
+                    Temperature_C: parseFloat(document.getElementById('temperature').value),
+                    Smoke_Level_ppm: parseFloat(document.getElementById('smoke').value),
+                    CO2_Level_ppm: parseFloat(document.getElementById('co2').value),
+                    Humidity_percent: parseFloat(document.getElementById('humidity').value),
+                    Occupancy_Count: parseInt(document.getElementById('occupancy').value),
+                    HVAC_Status: document.getElementById('hvac').value
+                };
+
+                const response = await fetch(`${API_BASE_URL}/predict`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                displayResults(result);
+                
+                // Update risk visualization
+                document.getElementById('riskVisualization').innerHTML = createRiskVisualization(result.fire_probability);
+
+            } catch (error) {
+                console.error('Prediction error:', error);
+                showAlert(`Prediction failed: ${error.message}`, 'error');
+            } finally {
+                button.textContent = originalText;
+                button.disabled = false;
+            }
+        });
+
+        // Display prediction results
+        function displayResults(result) {
+            const resultCard = document.getElementById('resultCard');
+            const resultContent = document.getElementById('resultContent');
+            
+            let resultClass, iconClass;
+            if (result.risk_level === 'CRITICAL' || result.risk_level === 'HIGH') {
+                resultClass = 'result-danger';
+                iconClass = '🚨';
+            } else if (result.risk_level === 'MEDIUM') {
+                resultClass = 'result-warning';
+                iconClass = '⚠️';
+            } else {
+                resultClass = 'result-safe';
+                iconClass = '✅';
+            }
+
+            const probabilityPercent = (result.fire_probability * 100).toFixed(1);
+            
+            resultContent.innerHTML = `
+                <div class="result-content ${resultClass}">
+                    <div style="text-align: center; margin-bottom: 20px;">
+                        <div style="font-size: 3rem; margin-bottom: 10px;">${iconClass}</div>
+                        <h3 style="font-size: 1.5rem; margin-bottom: 10px;">${result.risk_level} RISK</h3>
+                        <p style="font-size: 1.1rem; margin-bottom: 10px;">${result.message}</p>
+                        <p style="font-size: 2rem; font-weight: bold;">${probabilityPercent}% Fire Probability</p>
+                    </div>
+                    
+                    <div class="result-grid">
+                        <div class="result-item">
+                            <h4>Temperature</h4>
+                            <p>${result.input_data.Temperature_C}°C</p>
+                        </div>
+                        <div class="result-item">
+                            <h4>Smoke Level</h4>
+                            <p>${result.input_data.Smoke_Level_ppm} ppm</p>
+                        </div>
+                        <div class="result-item">
+                            <h4>CO2 Level</h4>
+                            <p>${result.input_data.CO2_Level_ppm} ppm</p>
+                        </div>
+                        <div class="result-item">
+                            <h4>Humidity</h4>
+                            <p>${result.input_data.Humidity_percent}%</p>
+                        </div>
+                        <div class="result-item">
+                            <h4>Occupancy</h4>
+                            <p>${result.input_data.Occupancy_Count} people</p>
+                        </div>
+                        <div class="result-item">
+                            <h4>HVAC Status</h4>
+                            <p>${result.input_data.HVAC_Status}</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            resultCard.style.display = 'block';
+            resultCard.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // Initialize the application
+        window.addEventListener('load', function() {
+            checkConnection();
+            
+            // Update risk visualization with default values
+            document.getElementById('riskVisualization').innerHTML = createRiskVisualization(0.1);
+            
+            // Retry connection every 30 seconds if disconnected
+            setInterval(() => {
+                if (!isConnected) {
+                    checkConnection();
+                }
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
